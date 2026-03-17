@@ -3,397 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>字形迷宮大冒險 - 尋找神祕帥哥</title>
+    <title>易混淆字迷宮大冒險</title>
     <style>
         :root {
-            --primary: #ff8fb1;
-            --secondary: #bcead5;
-            --accent: #9ed5c5;
-            --text: #444;
-            --bg: #fdf6ec;
+            --grass: #91cf50;
+            --path: #f3e5ab;
+            --wall: #4a7c2c;
+            --primary: #ff6b6b;
+            --boy-suit: #2c3e50;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, "Microsoft JhengHei";
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #e0f2f1;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-wrapper {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- 迷宮核心視覺 --- */
+        #maze-container {
+            position: relative;
+            width: 300px;
+            height: 360px; /* 6x5 網格 */
+            background-color: var(--grass);
+            margin: 20px auto;
+            border: 8px solid var(--wall);
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+        }
+
+        .cell {
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            font-size: 10px;
+            color: rgba(0,0,0,0.1);
         }
 
-        /* 介面容器 */
-        #game-container {
-            width: 95%;
-            max-width: 600px;
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-            position: relative;
-        }
+        .path-cell { background-color: var(--path); }
 
-        /* 隱藏區塊 */
-        .hidden { display: none !important; }
-
-        /* 標題與文字 */
-        h1 { color: var(--primary); margin-bottom: 10px; }
-        .info { font-size: 1.1rem; margin-bottom: 20px; }
-
-        /* 角色選擇區 */
-        .char-selection {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .char-option {
-            cursor: pointer;
-            padding: 10px;
-            border: 3px solid transparent;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-        .char-option:hover { background: var(--secondary); }
-        .char-option.selected { border-color: var(--primary); background: var(--secondary); }
-
-        /* 迷宮路徑視覺 */
-        #maze-view {
-            width: 100%;
-            height: 120px;
-            background: #eee;
-            border-radius: 10px;
-            position: relative;
-            margin-bottom: 20px;
-            overflow: hidden;
-            border: 4px solid var(--accent);
-        }
-        #path-line {
+        /* 角色與帥哥 */
+        #player {
             position: absolute;
-            top: 70%;
-            left: 0;
-            width: 1000%;
-            height: 10px;
-            background: #ddd;
-            transition: transform 0.5s ease;
-        }
-        #player-sprite {
-            position: absolute;
-            bottom: 25px;
-            left: 50px;
+            width: 50px;
+            height: 50px;
             font-size: 40px;
-            transition: transform 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s ease;
             z-index: 10;
         }
 
-        /* 題目區 */
-        .question-box {
-            font-size: 1.8rem;
-            margin: 20px 0;
-            min-height: 60px;
+        /* CSS 繪製帥哥 */
+        .handsome-man-mini {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 50px;
+            height: 55px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .man-head { width: 20px; height: 20px; background: #ffe0bd; border-radius: 50%; border-top: 5px solid #333; }
+        .man-body { width: 25px; height: 30px; background: var(--boy-suit); border-radius: 5px 5px 0 0; position: relative; }
+        .man-body::after { content: ''; position: absolute; top: 0; left: 10px; width: 5px; height: 15px; background: #c0392b; }
+
+        /* --- UI 介面 --- */
+        .ui-panel { padding: 20px; text-align: center; }
+        .question-card {
+            background: #fff3f3;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            border: 2px solid var(--primary);
+            font-size: 1.5rem;
             font-weight: bold;
         }
-        .options {
+        .options-group { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 0 #b33939;
+        }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b33939; }
+
+        /* 角色選擇單 */
+        .char-box {
             display: flex;
             justify-content: center;
             gap: 20px;
+            margin: 20px 0;
         }
-        .btn {
-            padding: 15px 40px;
-            font-size: 1.5rem;
+        .char-btn {
             cursor: pointer;
-            border: none;
-            border-radius: 50px;
-            background: var(--primary);
-            color: white;
-            transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 5px 0 #d6708d;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            font-size: 30px;
         }
-        .btn:active { transform: translateY(5px); box-shadow: none; }
-        .btn:hover { background: #ff7599; }
+        .char-btn.active { border-color: var(--primary); background: #ffebeb; }
 
-        /* 計時器與進度 */
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            color: #666;
-            margin-bottom: 10px;
+        #timer { font-size: 1.2rem; font-weight: bold; color: #e67e22; }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1); }
         }
-        #timer.warning { color: red; animation: blink 0.5s infinite; }
-
-        /* 結局畫面 - 帥哥出現 */
-        .handsome-man {
-            width: 120px;
-            height: 200px;
-            margin: 0 auto;
-            position: relative;
-            background: #ffe0bd; /* 皮膚色 */
-            border-radius: 20px 20px 0 0;
-        }
-        .man-hair { width: 130px; height: 40px; background: #333; position: absolute; top: -10px; left: -5px; border-radius: 20px; }
-        .man-suit { width: 140px; height: 120px; background: #2c3e50; position: absolute; top: 80px; left: -10px; border-radius: 10px; }
-        .man-tie { width: 20px; height: 60px; background: #c0392b; position: absolute; top: 80px; left: 50px; }
-
-        /* 排行榜表格 */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 8px; }
-
-        @keyframes blink { 50% { opacity: 0; } }
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-        .shake { animation: shake 0.3s ease-in-out; }
-
+        .win-anim { animation: celebrate 0.5s infinite; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="start-screen">
-        <h1>字形迷宮大挑戰</h1>
-        <p class="info">答對 20 題，在 90 秒內逃出迷宮見到神祕人！</p>
-        <input type="text" id="player-name" placeholder="輸入你的名字..." style="padding:10px; border-radius:10px; border:1px solid #ccc; width:80%;">
-        <div class="char-selection" id="char-selection">
-            <div class="char-option selected" data-emoji="🐱">
-                <div style="font-size: 50px;">🐱</div>
-                <div>小花貓</div>
-            </div>
-            <div class="char-option" data-emoji="🐰">
-                <div style="font-size: 50px;">🐰</div>
-                <div>長耳兔</div>
-            </div>
-            <div class="char-option" data-emoji="🐻">
-                <div style="font-size: 50px;">🐻</div>
-                <div>蜂蜜熊</div>
-            </div>
+<div id="game-wrapper">
+    <div id="setup-screen" class="ui-panel">
+        <h1 style="color: var(--wall)">中文易混淆字迷宮</h1>
+        <p>選出正確答案，走出迷宮見到帥哥！</p>
+        <input type="text" id="player-name" placeholder="輸入你的名字" style="font-size: 1rem; padding: 10px; width: 70%; border-radius: 5px; border: 1px solid #ccc;">
+        
+        <div class="char-box">
+            <div class="char-btn active" onclick="selectChar('🐱', this)">🐱</div>
+            <div class="char-btn" onclick="selectChar('🐰', this)">🐰</div>
+            <div class="char-btn" onclick="selectChar('🐻', this)">🐻</div>
+            <div class="char-btn" onclick="selectChar('🦊', this)">🦊</div>
         </div>
-        <button class="btn" onclick="startGame()">開始遊戲</button>
+        <button class="btn" onclick="initGame()">進入迷宮</button>
     </div>
 
     <div id="game-screen" class="hidden">
-        <div class="stats">
-            <span>進度: <span id="progress">0</span> / 20</span>
-            <span id="timer">時間: 90s</span>
-        </div>
-        
-        <div id="maze-view">
-            <div id="path-line"></div>
-            <div id="player-sprite">🐱</div>
+        <div class="ui-panel" style="padding-bottom: 0;">
+            <div id="timer">剩餘時間：90s</div>
+            <div style="font-size: 0.9rem;">目標：答對 20 題 (目前: <span id="score-val">0</span>)</div>
         </div>
 
-        <div class="question-box" id="q-text">這是一棵大___。</div>
-        <div class="options">
-            <button class="btn" id="opt-1" onclick="checkAnswer(0)">木</button>
-            <button class="btn" id="opt-2" onclick="checkAnswer(1)">本</button>
+        <div id="maze-container">
+            <div id="player">🐱</div>
+            <div class="handsome-man-mini" id="target-man" style="grid-column: 5; grid-row: 6;">
+                <div class="man-head"></div>
+                <div class="man-body"></div>
+            </div>
+        </div>
+
+        <div class="ui-panel">
+            <div class="question-card" id="q-text">載入中...</div>
+            <div class="options-group">
+                <button class="btn" id="opt0" onclick="handleAnswer(0)">A</button>
+                <button class="btn" id="opt1" onclick="handleAnswer(1)">B</button>
+            </div>
         </div>
     </div>
 
-    <div id="end-screen" class="hidden">
-        <h1 id="result-title">恭喜通關！</h1>
-        <div id="handsome-area" class="hidden">
-            <p>帥哥正在前方等著你！</p>
-            <div class="handsome-man">
-                <div class="man-hair"></div>
-                <div class="man-suit"><div class="man-tie"></div></div>
-                <div style="position:absolute; top:40px; left:30px; font-size:10px;">⭐ ⭐</div>
-                <div style="position:absolute; top:55px; left:50px; width:20px; height:2px; background:#333;"></div>
-            </div>
-            <p style="font-style: italic; color:#888; margin-top:130px;">「你真棒，學習很刻苦喔！」</p>
+    <div id="end-screen" class="ui-panel hidden">
+        <h1 id="end-title">遊戲結束</h1>
+        <div id="win-display" class="hidden">
+            <div style="font-size: 100px;">🤵🏻</div>
+            <p style="font-size: 1.2rem; color: #2c3e50;">「你好優秀！我在這裡等你好久了。」</p>
         </div>
+        <div id="stats-info" style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 20px 0;"></div>
         
-        <div id="fail-area" class="hidden">
-            <div style="font-size: 80px;">😢</div>
-            <p>再接再厲，差一點點就成功了！</p>
-        </div>
-
-        <div id="final-stats" style="margin: 20px 0; font-weight: bold;"></div>
-
-        <h3>🏆 本機排行榜</h3>
-        <table id="leaderboard">
-            <thead>
-                <tr>
-                    <th>名字</th>
-                    <th>分數</th>
-                    <th>時間</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <br>
-        <button class="btn" onclick="location.reload()">再玩一次</button>
+        <h3>🏆 歷史排行</h3>
+        <div id="rank-list" style="text-align: left; padding: 0 40px;"></div>
+        
+        <button class="btn" style="margin-top: 20px;" onclick="location.reload()">再玩一次</button>
     </div>
 </div>
 
 <script>
-    const allData = [
-        { q: "這件事情還（ ）完成。", options: ["未", "末"], correct: 0 },
-        { q: "這是一年之（ ）。", options: ["未", "末"], correct: 1 },
-        { q: "他是一位勇敢的（ ）兵。", options: ["士", "土"], correct: 0 },
-        { q: "地上有很多（ ）。", options: ["士", "土"], correct: 1 },
-        { q: "我（ ）經吃飽了。", options: ["已", "己"], correct: 0 },
-        { q: "請先做好自（ ）管理。", options: ["已", "己"], correct: 1 },
-        { q: "今（ ）天氣很好。", options: ["日", "曰"], correct: 0 },
-        { q: "孔子（ ）：「學而時習之。」", options: ["曰", "日"], correct: 0 },
-        { q: "有一個（ ）走進教室。", options: ["人", "入"], correct: 0 },
-        { q: "請（ ）內坐。", options: ["人", "入"], correct: 1 },
-        { q: "他用（ ）切水果。", options: ["刀", "力"], correct: 0 },
-        { q: "做事情要用（ ）氣。", options: ["刀", "力"], correct: 1 },
-        { q: "他有一（ ）元。", options: ["千", "干"], correct: 0 },
-        { q: "不要隨便（ ）涉別人。", options: ["千", "干"], correct: 1 },
-        { q: "這是一棵大（ ）。", options: ["木", "本"], correct: 0 },
-        { q: "這（ ）書很好看。", options: ["木", "本"], correct: 1 },
-        { q: "他長得很（ ）高了。", options: ["大", "太"], correct: 1 },
-        { q: "今天（ ）陽很大。", options: ["大", "太"], correct: 1 },
-        { q: "今（ ）是星期五。", options: ["天", "夭"], correct: 0 },
-        { q: "小狗不幸（ ）折。", options: ["天", "夭"], correct: 1 },
-        { q: "農夫在放（ ）。", options: ["牛", "午"], correct: 0 },
-        { q: "中（ ）休息時間到了。", options: ["牛", "午"], correct: 1 },
-        { q: "他是國（ ）。", options: ["王", "玉"], correct: 0 },
-        { q: "這塊（ ）很漂亮。", options: ["王", "玉"], correct: 1 },
-        { q: "他的頭髮很（ ）。", options: ["白", "百"], correct: 0 },
-        { q: "他活到一（ ）歲。", options: ["白", "百"], correct: 1 },
-        { q: "請用眼（ ）看。", options: ["目", "自"], correct: 0 },
-        { q: "請（ ）己完成作業。", options: ["目", "自"], correct: 1 },
-        { q: "他用（ ）拿東西。", options: ["手", "毛"], correct: 0 },
-        { q: "小狗身上有很多（ ）。", options: ["手", "毛"], correct: 1 }
+    const questions = [
+        { q: "這件事情還（ ）完成。", a: ["未", "末"], c: 0 },
+        { q: "這是一年之（ ）。", a: ["未", "末"], c: 1 },
+        { q: "他是一位勇敢的（ ）兵。", a: ["士", "土"], c: 0 },
+        { q: "地上有很多（ ）。", a: ["士", "土"], c: 1 },
+        { q: "我（ ）經吃飽了。", a: ["已", "己"], c: 0 },
+        { q: "請先做好自（ ）管理。", a: ["已", "己"], c: 1 },
+        { q: "今（ ）天氣很好。", a: ["日", "曰"], c: 0 },
+        { q: "孔子（ ）：「學而時習之。」", a: ["曰", "日"], c: 0 },
+        { q: "有一個（ ）走進教室。", a: ["人", "入"], c: 0 },
+        { q: "請（ ）內坐。", a: ["人", "入"], c: 1 },
+        { q: "他用（ ）切水果。", a: ["刀", "力"], c: 0 },
+        { q: "做事情要用（ ）氣。", a: ["刀", "力"], c: 1 },
+        { q: "他有一（ ）元。", a: ["千", "干"], c: 0 },
+        { q: "不要隨便（ ）涉別人。", a: ["千", "干"], c: 1 },
+        { q: "這是一棵大（ ）。", a: ["木", "本"], c: 0 },
+        { q: "這（ ）書很好看。", a: ["木", "本"], c: 1 },
+        { q: "他長得很（ ）高了。", a: ["大", "太"], c: 1 },
+        { q: "今天（ ）陽很大。", a: ["大", "太"], c: 1 },
+        { q: "今（ ）是星期五。", a: ["天", "夭"], c: 0 },
+        { q: "小狗不幸（ ）折。", a: ["天", "夭"], c: 1 },
+        { q: "農夫在放（ ）。", a: ["牛", "午"], c: 0 },
+        { q: "中（ ）休息時間到了。", a: ["牛", "午"], c: 1 },
+        { q: "他是國（ ）。", a: ["王", "玉"], c: 0 },
+        { q: "這塊（ ）很漂亮。", a: ["王", "玉"], c: 1 },
+        { q: "他的頭髮很（ ）。", a: ["白", "百"], c: 0 },
+        { q: "他活到一（ ）歲。", a: ["白", "百"], c: 1 },
+        { q: "請用眼（ ）看。", a: ["目", "自"], c: 0 },
+        { q: "請（ ）己完成作業。", a: ["目", "自"], c: 1 },
+        { q: "他用（ ）拿東西。", a: ["手", "毛"], correct: 0 },
+        { q: "小狗身上有很多（ ）。", a: ["手", "毛"], c: 1 }
     ];
 
-    let gameData = [];
-    let currentIdx = 0;
+    let currentQIndex = 0;
     let score = 0;
     let timeLeft = 90;
-    let timerObj;
-    let playerName = "";
-    let playerEmoji = "🐱";
+    let selectedEmoji = '🐱';
+    let timerInterval;
+    let shuffledQuestions = [];
 
-    // 選擇角色
-    document.querySelectorAll('.char-option').forEach(opt => {
-        opt.addEventListener('click', () => {
-            document.querySelectorAll('.char-option').forEach(el => el.classList.remove('selected'));
-            opt.classList.add('selected');
-            playerEmoji = opt.dataset.emoji;
-        });
-    });
+    // 初始化迷宮網格
+    const mazeContainer = document.getElementById('maze-container');
+    for(let i=0; i<30; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell path-cell';
+        cell.id = `cell-${i}`;
+        mazeContainer.appendChild(cell);
+    }
 
-    function startGame() {
-        playerName = document.getElementById('player-name').value || "無名英雄";
-        document.getElementById('player-sprite').innerText = playerEmoji;
-        document.getElementById('start-screen').classList.add('hidden');
+    function selectChar(emoji, el) {
+        selectedEmoji = emoji;
+        document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('player').innerText = emoji;
+    }
+
+    function initGame() {
+        document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         
-        // 隨機打亂題目
-        gameData = [...allData].sort(() => Math.random() - 0.5);
+        shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+        updatePlayerPos();
         showQuestion();
         
-        timerObj = setInterval(() => {
+        timerInterval = setInterval(() => {
             timeLeft--;
-            document.getElementById('timer').innerText = `時間: ${timeLeft}s`;
-            if(timeLeft <= 10) document.getElementById('timer').classList.add('warning');
-            if(timeLeft <= 0) endGame();
+            document.getElementById('timer').innerText = `剩餘時間：${timeLeft}s`;
+            if (timeLeft <= 0) endGame(false);
         }, 1000);
     }
 
     function showQuestion() {
-        if(currentIdx >= gameData.length) {
-            endGame();
+        if (currentQIndex >= shuffledQuestions.length) {
+            endGame(score >= 20);
             return;
         }
-        const q = gameData[currentIdx];
+        const q = shuffledQuestions[currentQIndex];
         document.getElementById('q-text').innerText = q.q;
-        document.getElementById('opt-1').innerText = q.options[0];
-        document.getElementById('opt-2').innerText = q.options[1];
+        document.getElementById('opt0').innerText = q.a[0];
+        document.getElementById('opt1').innerText = q.a[1];
     }
 
-    function checkAnswer(choice) {
-        const q = gameData[currentIdx];
-        const mazeView = document.getElementById('game-screen');
-        
-        if(choice === q.correct) {
+    function handleAnswer(choice) {
+        const q = shuffledQuestions[currentQIndex];
+        if (choice === q.c) {
             score++;
-            document.getElementById('progress').innerText = score;
-            // 移動角色動畫
-            moveCharacter();
-            if(score >= 20) {
-                setTimeout(endGame, 500);
+            document.getElementById('score-val').innerText = score;
+            updatePlayerPos();
+            if (score >= 20) {
+                // 檢查是否提早通關
+                setTimeout(() => endGame(true), 500);
                 return;
             }
         } else {
-            // 答錯震動
-            mazeView.classList.add('shake');
-            setTimeout(() => mazeView.classList.remove('shake'), 300);
+            // 答錯震動效果
+            document.getElementById('game-wrapper').style.animation = "shake 0.2s 3";
+            setTimeout(() => document.getElementById('game-wrapper').style.animation = "", 200);
         }
-
-        currentIdx++;
-        if(currentIdx < gameData.length) {
+        
+        currentQIndex++;
+        if (currentQIndex < shuffledQuestions.length) {
             showQuestion();
         } else {
-            endGame();
+            endGame(score >= 20);
         }
     }
 
-    function moveCharacter() {
-        const path = document.getElementById('path-line');
-        const moveX = score * 30; // 每題前進 30px
-        path.style.transform = `translateX(-${moveX}px)`;
+    function updatePlayerPos() {
+        // 將 0-29 映射到 5x6 網格的座標
+        const pos = score; 
+        const row = Math.floor(pos / 5) + 1;
+        const col = (pos % 5) + 1;
         
-        const sprite = document.getElementById('player-sprite');
-        sprite.style.transform = `scale(1.2) translateY(-10px)`;
-        setTimeout(() => {
-            sprite.style.transform = `scale(1) translateY(0)`;
-        }, 200);
+        const player = document.getElementById('player');
+        player.style.gridColumn = col;
+        player.style.gridRow = row;
     }
 
-    function endGame() {
-        clearInterval(timerObj);
+    function endGame(isWin) {
+        clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
 
-        const success = score >= 20;
+        const name = document.getElementById('player-name').value || "無名小卒";
         const timeUsed = 90 - timeLeft;
 
-        if(success) {
-            document.getElementById('result-title').innerText = "🎉 挑戰成功！";
-            document.getElementById('handsome-area').classList.remove('hidden');
+        if (isWin) {
+            document.getElementById('end-title').innerText = "🎉 恭喜逃出迷宮！";
+            document.getElementById('win-display').classList.remove('hidden');
+            document.getElementById('target-man').classList.add('win-anim');
         } else {
-            document.getElementById('result-title').innerText = "⏰ 挑戰結束";
-            document.getElementById('fail-area').classList.remove('hidden');
+            document.getElementById('end-title').innerText = "⌛ 時間到！未成功逃脫";
         }
 
-        document.getElementById('final-stats').innerText = 
-            `${playerName} 的成績：答對 ${score} 題，耗時 ${timeUsed} 秒`;
+        document.getElementById('stats-info').innerHTML = `
+            玩家：${name}<br>
+            答對題數：${score} / 20 (門檻)<br>
+            消耗時間：${timeUsed} 秒
+        `;
 
-        saveScore(playerName, score, timeUsed);
-        displayLeaderboard();
+        saveRecord(name, score, timeUsed);
+        showLeaderboard();
     }
 
-    function saveScore(name, s, t) {
-        let history = JSON.parse(localStorage.getItem('mazeScores') || "[]");
-        history.push({name, score: s, time: t});
-        // 排序：題數多者優先，題數相同則時間少者優先
-        history.sort((a, b) => b.score - a.score || a.time - b.time);
-        localStorage.setItem('mazeScores', JSON.stringify(history.slice(0, 5))); // 只留前五名
+    function saveRecord(name, s, t) {
+        let records = JSON.parse(localStorage.getItem('langMazeRank') || "[]");
+        records.push({name, score: s, time: t});
+        records.sort((a, b) => b.score - a.score || a.time - b.time);
+        localStorage.setItem('langMazeRank', JSON.stringify(records.slice(0, 5)));
     }
 
-    function displayLeaderboard() {
-        const history = JSON.parse(localStorage.getItem('mazeScores') || "[]");
-        const tbody = document.querySelector('#leaderboard tbody');
-        tbody.innerHTML = history.map(h => `
-            <tr>
-                <td>${h.name}</td>
-                <td>${h.score}</td>
-                <td>${h.time}s</td>
-            </tr>
-        `).join('');
+    function showLeaderboard() {
+        const records = JSON.parse(localStorage.getItem('langMazeRank') || "[]");
+        document.getElementById('rank-list').innerHTML = records.map((r, i) => 
+            `<div>${i+1}. ${r.name} - ${r.score}題 (${r.time}s)</div>`
+        ).join('');
     }
 </script>
+
+<style>
+    @keyframes shake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        20% { transform: translate(-3px, 0px) rotate(-1deg); }
+        40% { transform: translate(3px, 2px) rotate(1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        80% { transform: translate(3px, -1px) rotate(1deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+</style>
 
 </body>
 </html>
