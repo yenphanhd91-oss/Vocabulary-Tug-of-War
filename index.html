@@ -3,319 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>易混淆字拔河大賽</title>
+    <title>易混淆字搶答拔河賽</title>
     <style>
         :root {
             --dolphin-color: #00a8ff;
             --cat-color: #ff9f43;
+            --bg-color: #f8f9fa;
         }
+
         body {
             font-family: "Microsoft JhengHei", sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--bg-color);
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
+            height: 100vh;
             overflow: hidden;
             touch-action: manipulation;
         }
 
-        /* 頂部資訊 */
-        #header {
+        /* 分數看板 */
+        #score-board {
             width: 100%;
-            background: #333;
-            color: white;
-            padding: 10px 0;
-            text-align: center;
-            font-size: 1.2rem;
             display: flex;
             justify-content: space-around;
+            align-items: center;
+            background: #333;
+            color: white;
+            padding: 15px 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
-        /* 拔河戰場 */
-        #stage {
+        .timer-box {
+            background: #e74c3c;
+            padding: 5px 20px;
+            border-radius: 20px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* 拔河視覺區 */
+        #tug-war-arena {
             width: 100%;
-            height: 200px;
-            background: #81ecec;
+            height: 180px;
+            background: linear-gradient(to bottom, #81ecec, #55efc4);
             position: relative;
-            border-bottom: 5px solid #555;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-bottom: 8px solid #636e72;
         }
 
         #rope {
-            width: 80%;
-            height: 10px;
-            background: #a29bfe;
+            width: 100%;
+            height: 12px;
+            background: #d63031; /* 繩子顏色 */
             position: relative;
             display: flex;
             align-items: center;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .team-icon {
-            font-size: 50px;
+        .team-character {
+            font-size: 60px;
             position: absolute;
-            transition: all 0.3s;
+            top: -65px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
         }
 
-        #dolphin-team { left: -60px; }
-        #cat-team { right: -60px; }
-        #center-flag {
-            width: 30px;
-            height: 40px;
-            background: red;
+        #dolphin-char { left: 10%; }
+        #cat-char { right: 10%; }
+        
+        #rope-center {
+            width: 40px;
+            height: 60px;
+            background: #f1c40f;
             margin: 0 auto;
+            border: 2px solid #000;
         }
 
         /* 題目區 */
-        #game-area {
-            width: 90%;
-            max-width: 800px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        #question-display {
-            font-size: 2rem;
-            margin-bottom: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        /* 兩隊按鈕區 */
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            gap: 20px;
-        }
-
-        .team-pad {
+        #game-container {
             flex: 1;
-            padding: 15px;
-            border-radius: 10px;
+            width: 95%;
+            max-width: 900px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            padding-top: 20px;
         }
 
-        .dolphin-pad { background: #e3f2fd; border: 2px solid var(--dolphin-color); }
-        .cat-pad { background: #fff3e0; border: 2px solid var(--cat-color); }
-
-        .btn {
-            padding: 15px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
+        #question-box {
+            font-size: 2.2rem;
             background: white;
-            box-shadow: 0 3px 0 #ccc;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .btn:active {
-            transform: translateY(3px);
-            box-shadow: none;
-        }
-
-        .dolphin-pad .btn { color: var(--dolphin-color); }
-        .cat-pad .btn { color: var(--cat-color); }
-
-        /* 結束畫面 */
-        #overlay {
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 100;
-        }
-
-        #start-screen {
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: #6c5ce7;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 101;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="start-screen">
-        <h1>易混淆字拔河大賽</h1>
-        <p>🐬 海豚隊 (左邊) | 🐱 小貓隊 (右邊)</p>
-        <p>規則：搶答！答錯繩子會往對手那邊移喔！</p>
-        <button class="btn" onclick="startGame()" style="padding: 20px 50px;">開始遊戲</button>
-    </div>
-
-    <div id="header">
-        <div>🐬 海豚隊 分數: <span id="score1">0</span></div>
-        <div style="font-size: 1.5rem; color: #fab1a0;">⏳ <span id="timer">90</span>s</div>
-        <div>🐱 小貓隊 分數: <span id="score2">0</span></div>
-    </div>
-
-    <div id="stage">
-        <div id="rope">
-            <div id="dolphin-team" class="team-icon">🐬</div>
-            <div id="center-flag"></div>
-            <div id="cat-team" class="team-icon">🐱</div>
-        </div>
-    </div>
-
-    <div id="game-area">
-        <div id="question-display">載入中...</div>
-        
-        <div class="controls">
-            <div class="team-pad dolphin-pad">
-                <div style="font-weight: bold; color: var(--dolphin-color);">海豚隊 (按鍵 A / D)</div>
-                <button class="btn" onclick="checkAnswer(0, 'left')">選項 A</button>
-                <button class="btn" onclick="checkAnswer(1, 'left')">選項 B</button>
-            </div>
-
-            <div class="team-pad cat-pad">
-                <div style="font-weight: bold; color: var(--cat-color);">小貓隊 (按鍵 ← / →)</div>
-                <button class="btn" onclick="checkAnswer(0, 'right')">選項 A</button>
-                <button class="btn" onclick="checkAnswer(1, 'right')">選項 B</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="overlay">
-        <h1 id="winner-text">遊戲結束</h1>
-        <button class="btn" onclick="location.reload()">再玩一次</button>
-    </div>
-
-    <script>
-        const questions = [
-            { q: "這件事情還（__）完成。", options: ["未", "末"], ans: 0 },
-            { q: "這是一年之（__）。", options: ["未", "末"], ans: 1 },
-            { q: "他是一位勇敢的（__）兵。", options: ["士", "土"], ans: 0 },
-            { q: "地上有很多（__）。", options: ["士", "土"], ans: 1 },
-            { q: "我（__）經吃飽了。", options: ["已", "己"], ans: 0 },
-            { q: "請先做好自（__）管理。", options: ["已", "己"], ans: 1 },
-            { q: "今（__）天氣很好。", options: ["日", "曰"], ans: 0 },
-            { q: "孔子（__）：「學而時習之。」", options: ["日", "曰"], ans: 1 },
-            { q: "有一個（__）走進教室。", options: ["人", "入"], ans: 0 },
-            { q: "請（__）內坐。", options: ["人", "入"], ans: 1 },
-            { q: "他用（__）切水果。", options: ["刀", "力"], ans: 0 },
-            { q: "做事情要用（__）氣。", options: ["刀", "力"], ans: 1 },
-            { q: "他有一（__）元。", options: ["千", "干"], ans: 0 },
-            { q: "不要隨便（__）涉別人。", options: ["千", "干"], ans: 1 },
-            { q: "這是一棵大（__）。", options: ["木", "本"], ans: 0 },
-            { q: "這（__）書很好看。", options: ["木", "本"], ans: 1 },
-            { q: "他長得很（__）高了。", options: ["大", "太"], ans: 0 },
-            { q: "今天（__）陽很大。", options: ["大", "太"], ans: 1 },
-            { q: "今（__）是星期五。", options: ["天", "夭"], ans: 0 },
-            { q: "小狗不幸（__）折。", options: ["天", "夭"], ans: 1 },
-            { q: "農夫在放（__）。", options: ["牛", "午"], ans: 0 },
-            { q: "中（__）休息時間到了。", options: ["牛", "午"], ans: 1 },
-            { q: "他是國（__）。", options: ["王", "玉"], ans: 0 },
-            { q: "這塊（__）很漂亮。", options: ["王", "玉"], ans: 1 },
-            { q: "他的頭髮很（__）。", options: ["白", "百"], ans: 0 },
-            { q: "他活到一（__）歲。", options: ["白", "百"], ans: 1 },
-            { q: "請用眼（__）看。", options: ["目", "自"], ans: 0 },
-            { q: "請（__）己完成作業。", options: ["目", "自"], ans: 1 },
-            { q: "他用（__）拿東西。", options: ["手", "毛"], ans: 0 },
-            { q: "小狗身上有很多（__）。", options: ["手", "毛"], ans: 1 }
-        ];
-
-        let currentQ = 0;
-        let score1 = 0;
-        let score2 = 0;
-        let timeLeft = 90;
-        let ropePos = 0; // 0 為中間，負值往左，正值往右
-        let timerId;
-
-        function startGame() {
-            document.getElementById('start-screen').style.display = 'none';
-            showQuestion();
-            timerId = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = timeLeft;
-                if (timeLeft <= 0) endGame();
-            }, 1000);
-        }
-
-        function showQuestion() {
-            if (currentQ >= questions.length) {
-                endGame();
-                return;
-            }
-            const q = questions[currentQ];
-            document.getElementById('question-display').innerText = q.q;
-            
-            // 更新所有隊伍的按鈕文字
-            const buttons = document.querySelectorAll('.btn');
-            buttons[1].innerText = q.options[0]; // 海豚 A
-            buttons[2].innerText = q.options[1]; // 海豚 B
-            buttons[3].innerText = q.options[0]; // 小貓 A
-            buttons[4].innerText = q.options[1]; // 小貓 B
-        }
-
-        function checkAnswer(choiceIdx, team) {
-            const correctAns = questions[currentQ].ans;
-            let isCorrect = (choiceIdx === correctAns);
-
-            if (team === 'left') { // 海豚隊
-                if (isCorrect) {
-                    score1++;
-                    ropePos -= 30; // 往左移
-                } else {
-                    ropePos += 20; // 答錯懲罰：往右移
-                }
-            } else { // 小貓隊
-                if (isCorrect) {
-                    score2++;
-                    ropePos += 30; // 往右移
-                } else {
-                    ropePos -= 20; // 答錯懲罰：往左移
-                }
-            }
-
-            updateUI();
-            currentQ++;
-            showQuestion();
-        }
-
-        function updateUI() {
-            document.getElementById('score1').innerText = score1;
-            document.getElementById('score2').innerText = score2;
-            document.getElementById('rope').style.transform = `translateX(${ropePos}px)`;
-        }
-
-        function endGame() {
-            clearInterval(timerId);
-            document.getElementById('overlay').style.display = 'flex';
-            let resultText = "";
-            if (score1 > score2) resultText = "🐬 海豚隊 獲勝！";
-            else if (score2 > score1) resultText = "🐱 小貓隊 獲勝！";
-            else resultText = "平手！";
-            document.getElementById('winner-text').innerText = "遊戲結束\n" + resultText;
-        }
-
-        // 鍵盤支援
-        window.addEventListener('keydown', (e) => {
-            if (document.getElementById('start-screen').style.display !== 'none') return;
-            
-            switch(e.key.toLowerCase()) {
-                case 'a': checkAnswer(0, 'left'); break;
-                case 'd': checkAnswer(1, 'left'); break;
-                case 'arrowleft': checkAnswer(0, 'right'); break;
-                case 'arrowright': checkAnswer(1, 'right'); break;
-            }
-        });
-    </script>
-</body>
-</html>
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+            width: 90%;
