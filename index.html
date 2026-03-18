@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>字形迷宮：尋找神祕帥哥</title>
+    <title>萌寵認字趣：迷宮盡頭遇見他</title>
     <style>
         :root {
             --wall-color: #5d4037;
             --path-color: #fff9c4;
-            --grass-color: #81c784;
             --primary-btn: #ff7043;
+            --select-border: #e91e63;
         }
 
         body {
             font-family: "Microsoft JhengHei", sans-serif;
-            background-color: #e8f5e9;
+            background-color: #f0f4f8;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -29,85 +29,100 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 15px;
+            padding: 20px;
             text-align: center;
         }
 
         .hidden { display: none !important; }
 
-        /* --- 實體迷宮視覺區 --- */
+        /* --- 角色選擇樣式 --- */
+        .char-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .char-opt {
+            font-size: 45px;
+            cursor: pointer;
+            padding: 10px;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            transition: all 0.2s ease;
+            background: #f9f9f9;
+        }
+        .char-opt:hover { background: #eee; }
+        .char-opt.active {
+            border-color: var(--select-border);
+            background: #fff0f5;
+            transform: scale(1.1);
+        }
+
+        /* --- 迷宮網格 --- */
         #maze-board {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            width: 300px;
-            height: 300px;
-            margin: 10px auto;
+            width: 320px;
+            height: 320px;
+            margin: 15px auto;
             background: var(--wall-color);
-            border: 5px solid var(--wall-color);
-            border-radius: 8px;
+            border: 6px solid var(--wall-color);
+            border-radius: 12px;
             position: relative;
         }
-
         .cell { width: 100%; height: 100%; }
-        .w { background-color: var(--wall-color); } /* Wall */
-        .p { background-color: var(--path-color); } /* Path */
+        .w { background-color: var(--wall-color); }
+        .p { background-color: var(--path-color); }
 
         #player {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            font-size: 26px;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 10;
         }
 
-        /* 終點帥哥元件 */
         .handsome-man {
             position: absolute;
             bottom: 0; right: 0;
-            width: 30px; height: 30px;
-            background: #2c3e50;
-            border-radius: 5px 5px 0 0;
+            width: 32px; height: 32px;
             z-index: 5;
-        }
-        .handsome-man::before {
-            content: '🤵🏻';
-            position: absolute;
-            top: -15px; left: 2px;
-            font-size: 20px;
+            font-size: 24px;
         }
 
-        /* --- 介面樣式 --- */
+        /* --- UI 樣式 --- */
         .question-area {
-            background: #fff3e0;
-            padding: 15px;
-            border-radius: 12px;
-            margin: 10px 0;
-            border: 2px solid #ffcc80;
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 15px;
+            border: 2px solid #90caf9;
         }
-        .q-text { font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; color: #4e342e; }
-        .btn-group { display: flex; justify-content: center; gap: 15px; }
+        .q-text { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: #1565c0; }
+        .btn-group { display: flex; justify-content: center; gap: 20px; }
         .btn {
-            padding: 10px 30px;
-            font-size: 1.2rem;
+            padding: 12px 35px;
+            font-size: 1.3rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             background: var(--primary-btn);
             color: white;
             box-shadow: 0 4px 0 #d84315;
+            transition: 0.1s;
         }
         .btn:active { transform: translateY(3px); box-shadow: none; }
 
-        .stats { display: flex; justify-content: space-between; font-weight: bold; padding: 5px 10px; }
-        #timer.low { color: red; animation: blink 0.5s infinite; }
+        .stats { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; color: #555; }
+        #timer.low { color: #d32f2f; animation: blink 0.5s infinite; }
 
         @keyframes blink { 50% { opacity: 0.3; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
         .error-shake { animation: shake 0.2s 2; }
     </style>
 </head>
@@ -115,16 +130,18 @@
 
 <div id="game-box">
     <div id="start-ui">
-        <h2 style="color: #2e7d32;">字形迷宮大冒險</h2>
-        <p>請輸入大名並挑選你的角色：</p>
-        <input type="text" id="p-name" placeholder="你的名字" style="padding: 8px; width: 60%; border-radius: 5px; border: 1px solid #ccc;">
-        <div style="margin: 15px 0;">
-            <span class="char-opt" onclick="setChar('🐱', this)" style="font-size: 40px; cursor:pointer; border: 2px solid #ff7043; border-radius: 10px; padding: 5px;">🐱</span>
-            <span class="char-opt" onclick="setChar('🐰', this)" style="font-size: 40px; cursor:pointer; padding: 5px;">🐰</span>
-            <span class="char-opt" onclick="setChar('🦊', this)" style="font-size: 40px; cursor:pointer; padding: 5px;">🦊</span>
-            <span class="char-opt" onclick="setChar('🐶', this)" style="font-size: 40px; cursor:pointer; padding: 5px;">🐶</span>
+        <h1 style="color: #2e7d32; margin-top: 0;">萌寵認字趣</h1>
+        <p>找出正確的字，穿過迷宮見到他！</p>
+        <input type="text" id="p-name" placeholder="輸入你的名字" style="padding: 12px; width: 70%; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+        
+        <div class="char-container">
+            <div class="char-opt active" onclick="setChar('🐱', this)">🐱</div>
+            <div class="char-opt" onclick="setChar('🐰', this)">🐰</div>
+            <div class="char-opt" onclick="setChar('🦊', this)">🦊</div>
+            <div class="char-opt" onclick="setChar('🐶', this)">🐶</div>
         </div>
-        <button class="btn" onclick="gameStart()">進入迷宮</button>
+        
+        <button class="btn" onclick="gameStart()">開始冒險</button>
     </div>
 
     <div id="game-ui" class="hidden">
@@ -135,11 +152,11 @@
 
         <div id="maze-board">
             <div id="player">🐱</div>
-            <div class="handsome-man" style="grid-column: 10; grid-row: 10;"></div>
+            <div class="handsome-man" style="grid-column: 10; grid-row: 10;">🤵🏻</div>
         </div>
 
         <div class="question-area">
-            <div class="q-text" id="question">讀取中...</div>
+            <div class="q-text" id="question">載入中...</div>
             <div class="btn-group">
                 <button class="btn" onclick="check(0)" id="btn0">A</button>
                 <button class="btn" onclick="check(1)" id="btn1">B</button>
@@ -150,18 +167,17 @@
     <div id="end-ui" class="hidden">
         <h1 id="end-title">結果</h1>
         <div id="win-msg" class="hidden">
-            <div style="font-size: 60px;">🤵🏻💖</div>
-            <p>「等你好久了，你真的很棒！」</p>
+            <div style="font-size: 70px; margin-bottom: 10px;">🤵🏻💖</div>
+            <p style="font-size: 1.2rem; color: #e91e63; font-weight: bold;">「你真的很棒，我們終於見面了！」</p>
         </div>
-        <p id="final-info"></p>
+        <p id="final-info" style="font-size: 1.1rem;"></p>
         <button class="btn" onclick="location.reload()">再玩一次</button>
-        <div id="rank" style="margin-top: 20px; text-align: left; background: #f1f1f1; padding: 10px; border-radius: 10px;"></div>
+        <div id="rank" style="margin-top: 25px; text-align: left; background: #f5f5f5; padding: 15px; border-radius: 12px;"></div>
     </div>
 </div>
 
 <script>
-    // 迷宮地圖數據 (10x10): w=牆壁, p=路徑
-    // 預先設計好一條蜿蜒的路徑，確保有 30 個點
+    // 迷宮路徑設計 (w=牆, p=路)
     const mazeData = [
         'p','p','w','w','w','w','w','w','w','w',
         'w','p','w','p','p','p','w','w','w','w',
@@ -175,7 +191,7 @@
         'w','p','w','w','w','w','w','p','p','p'
     ];
 
-    // 路徑座標順序 (對應 p 的位置)
+    // 對應 score 0-30 的座標 [x, y]
     const pathCoords = [
         [0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,1],[4,1],[5,1],[5,2],[5,4],[4,4],[3,4],[2,4],[1,4],[1,5],[1,6],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[7,6],[6,6],[5,6],[4,6],[3,6],[7,9],[8,9],[9,9]
     ];
@@ -189,7 +205,7 @@
         {q:"他用（ ）切水果。", a:["刀","力"], c:0}, {q:"做事情要用（ ）氣。", a:["刀","力"], c:1},
         {q:"他有一（ ）元。", a:["千","干"], c:0}, {q:"不要隨便（ ）涉別人。", a:["千","干"], c:1},
         {q:"這是一棵大（ ）。", a:["木","本"], c:0}, {q:"這（ ）書很好看。", a:["木","本"], c:1},
-        {q:"他長得很（ ）高了。", a:["大","太"], c:1}, {q:"今天（ ）陽很大。", a:["大","太"], c:1},
+        {q:"他長得（ ）高了。", a:["大","太"], c:1}, {q:"今天（ ）陽很大。", a:["大","太"], c:1}, // 已修正題目
         {q:"今（ ）是星期五。", a:["天","夭"], c:0}, {q:"小狗不幸（ ）折。", a:["天","夭"], c:1},
         {q:"農夫在放（ ）。", a:["牛","午"], c:0}, {q:"中（ ）休息時間到了。", a:["牛","午"], c:1},
         {q:"他是國（ ）。", a:["王","玉"], c:0}, {q:"這塊（ ）很漂亮。", a:["王","玉"], c:1},
@@ -205,7 +221,7 @@
     let myEmoji = '🐱';
     let qList = [];
 
-    // 初始化迷宮網格
+    // 初始化地圖格子
     const board = document.getElementById('maze-board');
     mazeData.forEach(type => {
         const div = document.createElement('div');
@@ -213,19 +229,27 @@
         board.appendChild(div);
     });
 
+    // 角色選擇與紅框處理
     function setChar(emoji, el) {
         myEmoji = emoji;
-        document.querySelectorAll('.char-opt').forEach(o => o.style.borderColor = "transparent");
-        el.style.borderColor = "#ff7043";
+        // 移除所有角色的 active 類別 (紅框)
+        document.querySelectorAll('.char-opt').forEach(o => o.classList.remove('active'));
+        // 為被點選的角色加上 active 類別
+        el.classList.add('active');
         document.getElementById('player').innerText = emoji;
     }
 
     function gameStart() {
+        const nameInput = document.getElementById('p-name').value;
+        if(!nameInput) { alert("請輸入名字喔！"); return; }
+        
         document.getElementById('start-ui').classList.add('hidden');
         document.getElementById('game-ui').classList.remove('hidden');
+        
         qList = [...questions].sort(() => Math.random() - 0.5);
         updatePlayer();
         nextQ();
+        
         timerInt = setInterval(() => {
             timer--;
             document.getElementById('timer').innerText = `時間：${timer}s`;
@@ -247,8 +271,9 @@
             score++;
             document.getElementById('score').innerText = score;
             updatePlayer();
-            if(score >= 20) { setTimeout(gameEnd, 300); return; }
+            if(score >= 20) { setTimeout(gameEnd, 400); return; }
         } else {
+            // 答錯震動回饋
             document.getElementById('game-box').classList.add('error-shake');
             setTimeout(() => document.getElementById('game-box').classList.remove('error-shake'), 300);
         }
@@ -258,9 +283,9 @@
 
     function updatePlayer() {
         const p = document.getElementById('player');
-        const pos = pathCoords[score]; // 根據得分決定位置
-        p.style.left = (pos[0] * 30) + 'px';
-        p.style.top = (pos[1] * 30) + 'px';
+        const pos = pathCoords[score];
+        p.style.left = (pos[0] * 32) + 'px';
+        p.style.top = (pos[1] * 32) + 'px';
     }
 
     function gameEnd() {
@@ -269,22 +294,23 @@
         document.getElementById('end-ui').classList.remove('hidden');
         
         const isWin = score >= 20;
-        document.getElementById('end-title').innerText = isWin ? "成功通關！" : "挑戰失敗";
+        document.getElementById('end-title').innerText = isWin ? "🎉 挑戰成功！" : "⌛ 挑戰結束";
         if(isWin) document.getElementById('win-msg').classList.remove('hidden');
         
         const name = document.getElementById('p-name').value || "冒險者";
         document.getElementById('final-info').innerText = `${name} 答對了 ${score} 題，剩餘時間 ${timer} 秒。`;
         
-        saveRank(name, score, 90-timer);
+        saveRank(name, score, 90 - timer);
     }
 
     function saveRank(n, s, t) {
-        let r = JSON.parse(localStorage.getItem('maze_rank') || "[]");
+        let r = JSON.parse(localStorage.getItem('maze_rank_v2') || "[]");
         r.push({n, s, t});
         r.sort((a,b) => b.s - a.s || a.t - b.t);
         r = r.slice(0, 5);
-        localStorage.setItem('maze_rank', JSON.stringify(r));
-        document.getElementById('rank').innerHTML = "<b>前五名排行：</b><br>" + r.map(i => `${i.n}: ${i.s}題 (${i.t}秒)`).join('<br>');
+        localStorage.setItem('maze_rank_v2', JSON.stringify(r));
+        document.getElementById('rank').innerHTML = "<b>🏆 歷史前五名：</b><br>" + 
+            r.map((item, index) => `${index + 1}. ${item.n} - ${item.s} 題 (${item.t}秒)`).join('<br>');
     }
 </script>
 </body>
